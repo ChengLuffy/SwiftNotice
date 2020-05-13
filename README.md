@@ -1,14 +1,14 @@
 SwiftNotice
 --
-SwiftNotice is a GUI library for displaying various popups (HUD) written in pure Swift, fits any scrollview.
+SwiftNotice is a GUI library for displaying various popups (HUD) written in pure Swift, fits any scrollview and supports iPhone X.
 
-##Features
+## Features
 
 ![SwiftNotice gif](https://raw.githubusercontent.com/johnlui/SwiftNotice/master/SwiftNotice.gif)
 
-##Pretty easy to use
+## Pretty easy to use
 
-In any subclass of UIViewController:
+In any subclass of UIView, UIScrollView, UIViewController, UITableViewController, UITableViewCell:
 
 ```swift
 self.pleaseWait()
@@ -26,20 +26,22 @@ self.clearAllNotice() // clear
 
 [Read the documentation](https://github.com/johnlui/SwiftNotice/wiki) for more information.
 
-##Installation
+## Installation
 
 Just clone and add `SwiftNotice.swift` to your project.
 
-##Requirements
+## Requirements
 
 * iOS 7.0+
+* Xcode 9 (Swift 4) in current swift4 branch.
+* Xcode 8 (Swift 3) in swift3 branch.
+* Xcode 7 (Swift 2) in master branch.
 * Xcode 6.3 (Swift 1.2) in [v3.1](https://github.com/johnlui/SwiftNotice/releases/tag/v3.1)
-* Xcode 7 (Swift 2.0) in the current master branch
 
-##Contribution
+## Contribution
 
 You are welcome to fork and submit pull requests.
 
-##License
+## License
 
 SwiftNotice is open-sourced software licensed under the MIT license.

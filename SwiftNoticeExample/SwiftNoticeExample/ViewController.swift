@@ -12,44 +12,63 @@ class ViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
-        UIApplication.sharedApplication().statusBarStyle = UIStatusBarStyle.LightContent
     }
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
     }
 
-    @IBAction func topNotice(sender: AnyObject) {
+    @IBAction func topNotice(_ sender: AnyObject) {
+        UIApplication.shared.setStatusBarHidden(false, with: .slide)
         self.noticeTop("OK!")
     }
-    @IBAction func wait(sender: AnyObject) {
-//        self.pleaseWait()
+    @IBAction func wait(_ sender: AnyObject) {
+        // Just wait
+        // self.pleaseWait()
+        
         var imagesArray = Array<UIImage>()
         for i in 1...7 {
             imagesArray.append(UIImage(named: "loading\(i)")!)
         }
         self.pleaseWaitWithImages(imagesArray, timeInterval: 50)
     }
-    @IBAction func noticeSuccess(sender: AnyObject) {
+    @IBAction func noticeSuccess(_ sender: AnyObject) {
         self.successNotice("Success!")
         self.noticeSuccess("Success!", autoClear: true)
         self.noticeSuccess("Success!", autoClear: true, autoClearTime: 10)
     }
-    @IBAction func noticeError(sender: AnyObject) {
+    @IBAction func noticeError(_ sender: AnyObject) {
         self.errorNotice("Error!")
     }
-    @IBAction func noticeInfo(sender: AnyObject) {
+    @IBAction func noticeInfo(_ sender: AnyObject) {
         self.infoNotice("Info")
     }
-    @IBAction func text(sender: AnyObject) {
+    @IBAction func text(_ sender: AnyObject) {
 //        SwiftNotice.showText("kiss me baby")
         self.noticeOnlyText("Only Text Only Text Only Text Only \nText Only Text Only Text Only\n Text Only Text Only Text ")
     }
-    @IBAction func clear(sender: AnyObject) {
+    @IBAction func clear(_ sender: AnyObject) {
         self.clearAllNotice()
     }
+    
+    @IBAction func request(_ sender: UIButton) {
+        let hud = self.pleaseWait()
+        DispatchQueue.global().async {
+            DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 1, execute: {
+                hud.hide()
+                self.successNotice("Success", autoClear: true)
+                self.anotherRequest()
+            })
+        }
+    }
 
+    func anotherRequest(){
+        let hud = self.pleaseWait()
+        DispatchQueue.global().async {
+            DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 1, execute: {
+                hud.hide()
+            })
+        }
+    }
 }
 

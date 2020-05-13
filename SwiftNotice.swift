@@ -9,202 +9,275 @@
 import Foundation
 import UIKit
 
-extension UIViewController {
+private let snTopBar: Int = 1001
+
+extension UIResponder {
     /// wait with your own animated images
-    func pleaseWaitWithImages(imageNames: Array<UIImage>, timeInterval: Int) {
-        SwiftNotice.wait(imageNames, timeInterval: timeInterval)
+    @discardableResult
+    func pleaseWaitWithImages(_ imageNames: [UIImage], timeInterval: Int) -> UIWindow {
+        return SwiftNotice.wait(imageNames, timeInterval: timeInterval)
     }
     // api changed from v3.3
-    func noticeTop(text: String, autoClear: Bool = true, autoClearTime: Int = 1) {
-        SwiftNotice.noticeOnStatusBar(text, autoClear: autoClear, autoClearTime: autoClearTime)
+    @discardableResult
+    func noticeTop(_ text: String, autoClear: Bool = true, autoClearTime: Float = 1) -> UIWindow {
+        return SwiftNotice.noticeOnStatusBar(text, autoClear: autoClear, autoClearTime: autoClearTime)
     }
-    
+
     // new apis from v3.3
-    func noticeSuccess(text: String, autoClear: Bool = false, autoClearTime: Int = 3) {
-        SwiftNotice.showNoticeWithText(NoticeType.success, text: text, autoClear: autoClear, autoClearTime: autoClearTime)
+    @discardableResult
+    func noticeSuccess(_ text: String, autoClear: Bool = false, autoClearTime: Float = 3) -> UIWindow {
+        return SwiftNotice.showNoticeWithText(NoticeType.success,
+                                              text: text,
+                                              autoClear: autoClear,
+                                              autoClearTime: autoClearTime)
     }
-    func noticeError(text: String, autoClear: Bool = false, autoClearTime: Int = 3) {
-        SwiftNotice.showNoticeWithText(NoticeType.error, text: text, autoClear: autoClear, autoClearTime: autoClearTime)
+    @discardableResult
+    func noticeError(_ text: String, autoClear: Bool = false, autoClearTime: Float = 3) -> UIWindow {
+        return SwiftNotice.showNoticeWithText(NoticeType.error,
+                                              text: text,
+                                              autoClear: autoClear,
+                                              autoClearTime: autoClearTime)
     }
-    func noticeInfo(text: String, autoClear: Bool = false, autoClearTime: Int = 3) {
-        SwiftNotice.showNoticeWithText(NoticeType.info, text: text, autoClear: autoClear, autoClearTime: autoClearTime)
+    @discardableResult
+    func noticeInfo(_ text: String, autoClear: Bool = false, autoClearTime: Float = 3) -> UIWindow {
+        return SwiftNotice.showNoticeWithText(NoticeType.info,
+                                              text: text,
+                                              autoClear: autoClear,
+                                              autoClearTime: autoClearTime)
     }
-    
+
     // old apis
-    func successNotice(text: String, autoClear: Bool = true) {
-        SwiftNotice.showNoticeWithText(NoticeType.success, text: text, autoClear: autoClear, autoClearTime: 3)
+    @discardableResult
+    func successNotice(_ text: String, autoClear: Bool = true) -> UIWindow {
+        return SwiftNotice.showNoticeWithText(NoticeType.success, text: text, autoClear: autoClear, autoClearTime: 3)
     }
-    func errorNotice(text: String, autoClear: Bool = true) {
-        SwiftNotice.showNoticeWithText(NoticeType.error, text: text, autoClear: autoClear, autoClearTime: 3)
+    @discardableResult
+    func errorNotice(_ text: String, autoClear: Bool = true) -> UIWindow {
+        return SwiftNotice.showNoticeWithText(NoticeType.error, text: text, autoClear: autoClear, autoClearTime: 3)
     }
-    func infoNotice(text: String, autoClear: Bool = true) {
-        SwiftNotice.showNoticeWithText(NoticeType.info, text: text, autoClear: autoClear, autoClearTime: 3)
+    @discardableResult
+    func infoNotice(_ text: String, autoClear: Bool = true) -> UIWindow {
+        return SwiftNotice.showNoticeWithText(NoticeType.info, text: text, autoClear: autoClear, autoClearTime: 3)
     }
-    func notice(text: String, type: NoticeType, autoClear: Bool, autoClearTime: Int = 3) {
-        SwiftNotice.showNoticeWithText(type, text: text, autoClear: autoClear, autoClearTime: autoClearTime)
+    @discardableResult
+    func notice(_ text: String, type: NoticeType, autoClear: Bool, autoClearTime: Float = 3) -> UIWindow {
+        return SwiftNotice.showNoticeWithText(type, text: text, autoClear: autoClear, autoClearTime: autoClearTime)
     }
-    func pleaseWait() {
-        SwiftNotice.wait()
+    @discardableResult
+    func pleaseWait() -> UIWindow {
+        return SwiftNotice.wait()
     }
-    func noticeOnlyText(text: String) {
-        SwiftNotice.showText(text)
+    @discardableResult
+    func noticeOnlyText(_ text: String) -> UIWindow {
+        return SwiftNotice.showText(text)
     }
     func clearAllNotice() {
         SwiftNotice.clear()
     }
 }
 
-enum NoticeType{
+enum NoticeType {
     case success
     case error
     case info
 }
 
 class SwiftNotice: NSObject {
-    
-    static var windows = Array<UIWindow!>()
-    static let rv = UIApplication.sharedApplication().keyWindow?.subviews.first as UIView!
-    static var timer: dispatch_source_t!
+
+    static var windows = [UIWindow?]()
+    static let rootView = UIApplication.shared.keyWindow?.subviews.first as UIView?
+    static var timer: DispatchSource!
     static var timerTimes = 0
+
+    /* just for iOS 8
+     */
     static var degree: Double {
         get {
-            return [0, 0, 180, 270, 90][UIApplication.sharedApplication().statusBarOrientation.hashValue] as Double
+            return [0, 0, 180, 270, 90][UIApplication.shared.statusBarOrientation.hashValue] as Double
         }
     }
-    static var center: CGPoint {
-        get {
-            var array = [UIScreen.mainScreen().bounds.width, UIScreen.mainScreen().bounds.height]
-            array = array.sort(<)
-            let screenWidth = array[0]
-            let screenHeight = array[1]
-            let x = [0, screenWidth/2, screenWidth/2, 10, screenWidth-10][UIApplication.sharedApplication().statusBarOrientation.hashValue] as CGFloat
-            let y = [0, 10, screenHeight-10, screenHeight/2, screenHeight/2][UIApplication.sharedApplication().statusBarOrientation.hashValue] as CGFloat
-            return CGPointMake(x, y)
-        }
-    }
-    
+
     // fix https://github.com/johnlui/SwiftNotice/issues/2
     // thanks broccolii(https://github.com/broccolii) and his PR https://github.com/johnlui/SwiftNotice/pull/5
     static func clear() {
-        self.cancelPreviousPerformRequestsWithTarget(self)
-        if let _ = timer {
-            dispatch_source_cancel(timer)
+        self.cancelPreviousPerformRequests(withTarget: self)
+        if timer != nil {
+            timer.cancel()
             timer = nil
             timerTimes = 0
         }
-        windows.removeAll(keepCapacity: false)
+        windows.removeAll(keepingCapacity: false)
     }
-    
-    static func noticeOnStatusBar(text: String, autoClear: Bool, autoClearTime: Int) {
-        let frame = UIApplication.sharedApplication().statusBarFrame
+
+    @discardableResult
+    static func noticeOnStatusBar(_ text: String, autoClear: Bool, autoClearTime: Float) -> UIWindow {
+        let frame = UIApplication.shared.statusBarFrame
         let window = UIWindow()
-        window.backgroundColor = UIColor.clearColor()
+        window.backgroundColor = UIColor.clear
         let view = UIView()
         view.backgroundColor = UIColor(red: 0x6a/0x100, green: 0xb4/0x100, blue: 0x9f/0x100, alpha: 1)
-        
-        let label = UILabel(frame: frame)
-        label.textAlignment = NSTextAlignment.Center
-        label.font = UIFont.systemFontOfSize(12)
-        label.textColor = UIColor.whiteColor()
+
+        let frameX = CGRect(x: frame.origin.x, y: frame.origin.y + frame.height - 17, width: frame.width, height: 20)
+        let label = UILabel(frame: frame.height > 20 ? frameX : frame)
+        label.textAlignment = NSTextAlignment.center
+        label.font = UIFont.systemFont(ofSize: 12)
+        label.textColor = UIColor.white
         label.text = text
         view.addSubview(label)
-        
+
         window.frame = frame
         view.frame = frame
-        
-        window.windowLevel = UIWindowLevelStatusBar
-        window.hidden = false
-        // change orientation
-        window.center = center
-        window.transform = CGAffineTransformMakeRotation(CGFloat(degree * M_PI / 180))
+
+        if let version = Double(UIDevice.current.systemVersion),
+            version < 9.0 {
+            // change center
+            var array = [UIScreen.main.bounds.width, UIScreen.main.bounds.height]
+            array = array.sorted(by: <)
+            let screenWidth = array[0]
+            let screenHeight = array[1]
+            let hashValue = UIApplication.shared.statusBarOrientation.hashValue
+            let pointX = [0, screenWidth/2, screenWidth/2, 10, screenWidth-10][hashValue] as CGFloat
+            let pointY = [0, 10, screenHeight-10, screenHeight/2, screenHeight/2][hashValue] as CGFloat
+            window.center = CGPoint(x: pointX, y: pointY)
+
+            // change direction
+            window.transform = CGAffineTransform(rotationAngle: CGFloat(degree * Double.pi / 180))
+        }
+
+        window.windowLevel = UIWindow.Level.statusBar
+        window.isHidden = false
         window.addSubview(view)
         windows.append(window)
-        
-        if autoClear {
-            let selector = #selector(SwiftNotice.hideNotice(_:))
-            self.performSelector(selector, withObject: window, afterDelay: NSTimeInterval(autoClearTime))
-        }
+
+        var origPoint = view.frame.origin
+        origPoint.y = -(view.frame.size.height)
+        let destPoint = view.frame.origin
+        view.tag = snTopBar
+
+        view.frame = CGRect(origin: origPoint, size: view.frame.size)
+        UIView.animate(withDuration: 0.3, animations: {
+            view.frame = CGRect(origin: destPoint, size: view.frame.size)
+        }, completion: { _ in
+            if autoClear {
+                self.perform(.hideNotice, with: window, afterDelay: TimeInterval(autoClearTime))
+            }
+        })
+        return window
     }
-    static func wait(imageNames: Array<UIImage> = Array<UIImage>(), timeInterval: Int = 0) {
-        let frame = CGRectMake(0, 0, 78, 78)
+
+    @discardableResult
+    static func wait(_ imageNames: [UIImage] = [UIImage](), timeInterval: Int = 0) -> UIWindow {
+        let frame = CGRect(x: 0, y: 0, width: 78, height: 78)
         let window = UIWindow()
-        window.backgroundColor = UIColor.clearColor()
+        window.backgroundColor = UIColor.clear
         let mainView = UIView()
         mainView.layer.cornerRadius = 12
-        mainView.backgroundColor = UIColor(red:0, green:0, blue:0, alpha: 0.8)
-        
+        mainView.backgroundColor = UIColor(red: 0, green: 0, blue: 0, alpha: 0.8)
+
         if imageNames.count > 0 {
             if imageNames.count > timerTimes {
-                let iv = UIImageView(frame: frame)
-                iv.image = imageNames.first!
-                iv.contentMode = UIViewContentMode.ScaleAspectFit
-                mainView.addSubview(iv)
-                timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_main_queue())
-                dispatch_source_set_timer(timer, DISPATCH_TIME_NOW, UInt64(timeInterval) * NSEC_PER_MSEC, 0)
-                dispatch_source_set_event_handler(timer, { () -> Void in
+                let imageView = UIImageView(frame: frame)
+                imageView.image = imageNames.first!
+                imageView.contentMode = UIView.ContentMode.scaleAspectFit
+                mainView.addSubview(imageView)
+                timer = DispatchSource.makeTimerSource(flags: DispatchSource.TimerFlags(rawValue: UInt(0)),
+                                                       queue: DispatchQueue.main) as? DispatchSource
+                timer.schedule(deadline: DispatchTime.now(),
+                               repeating: DispatchTimeInterval.milliseconds(timeInterval))
+                timer.setEventHandler(handler: { () -> Void in
                     let name = imageNames[timerTimes % imageNames.count]
-                    iv.image = name
+                    imageView.image = name
                     timerTimes += 1
                 })
-                dispatch_resume(timer)
+                timer.resume()
             }
         } else {
-            let ai = UIActivityIndicatorView(activityIndicatorStyle: UIActivityIndicatorViewStyle.WhiteLarge)
-            ai.frame = CGRectMake(21, 21, 36, 36)
-            ai.startAnimating()
-            mainView.addSubview(ai)
+            let activityIndicator = UIActivityIndicatorView(style: UIActivityIndicatorView.Style.whiteLarge)
+            activityIndicator.frame = CGRect(x: 21, y: 21, width: 36, height: 36)
+            activityIndicator.startAnimating()
+            mainView.addSubview(activityIndicator)
         }
-        
+
         window.frame = frame
         mainView.frame = frame
-        
-        window.windowLevel = UIWindowLevelAlert
-        window.center = getRealCenter()
-        // change orientation
-        window.transform = CGAffineTransformMakeRotation(CGFloat(degree * M_PI / 180))
-        window.hidden = false
+        window.center = rootView!.center
+
+        if let version = Double(UIDevice.current.systemVersion),
+            version < 9.0 {
+            // change center
+            window.center = getRealCenter()
+            // change direction
+            window.transform = CGAffineTransform(rotationAngle: CGFloat(degree * Double.pi / 180))
+        }
+
+        window.windowLevel = UIWindow.Level.alert
+        window.isHidden = false
         window.addSubview(mainView)
         windows.append(window)
+
+        mainView.alpha = 0.0
+        UIView.animate(withDuration: 0.2, animations: {
+            mainView.alpha = 1
+        })
+        return window
     }
-    static func showText(text: String) {
+
+    @discardableResult
+    static func showText(_ text: String, autoClear: Bool=true, autoClearTime: Float=2) -> UIWindow {
         let window = UIWindow()
-        window.backgroundColor = UIColor.clearColor()
+        window.backgroundColor = UIColor.clear
         let mainView = UIView()
         mainView.layer.cornerRadius = 12
-        mainView.backgroundColor = UIColor(red:0, green:0, blue:0, alpha: 0.8)
-        
+        mainView.backgroundColor = UIColor(red: 0, green: 0, blue: 0, alpha: 0.8)
+
         let label = UILabel()
         label.text = text
         label.numberOfLines = 0
-        label.font = UIFont.systemFontOfSize(13)
-        label.textAlignment = NSTextAlignment.Center
-        label.textColor = UIColor.whiteColor()
-        label.sizeToFit()
+        label.font = UIFont.systemFont(ofSize: 13)
+        label.textAlignment = NSTextAlignment.center
+        label.textColor = UIColor.white
+        let size = label.sizeThatFits(CGSize(width: UIScreen.main.bounds.width-82,
+                                             height: CGFloat.greatestFiniteMagnitude))
+        label.bounds = CGRect(x: 0, y: 0, width: size.width, height: size.height)
         mainView.addSubview(label)
-        
-        let superFrame = CGRectMake(0, 0, label.frame.width + 50 , label.frame.height + 30)
+
+        let superFrame = CGRect(x: 0, y: 0, width: label.frame.width + 50, height: label.frame.height + 30)
         window.frame = superFrame
         mainView.frame = superFrame
-        
+
         label.center = mainView.center
-        
-        window.windowLevel = UIWindowLevelAlert
-        window.center = getRealCenter()
-        // change orientation
-        window.transform = CGAffineTransformMakeRotation(CGFloat(degree * M_PI / 180))
-        window.hidden = false
+        window.center = rootView!.center
+
+        if let version = Double(UIDevice.current.systemVersion),
+            version < 9.0 {
+            // change center
+            window.center = getRealCenter()
+            // change direction
+            window.transform = CGAffineTransform(rotationAngle: CGFloat(degree * Double.pi / 180))
+        }
+
+        window.windowLevel = UIWindow.Level.alert
+        window.isHidden = false
         window.addSubview(mainView)
         windows.append(window)
+
+        if autoClear {
+            self.perform(.hideNotice, with: window, afterDelay: TimeInterval(autoClearTime))
+        }
+        return window
     }
-    
-    static func showNoticeWithText(type: NoticeType,text: String, autoClear: Bool, autoClearTime: Int) {
-        let frame = CGRectMake(0, 0, 90, 90)
+
+    @discardableResult
+    static func showNoticeWithText(_ type: NoticeType,
+                                   text: String,
+                                   autoClear: Bool,
+                                   autoClearTime: Float) -> UIWindow {
         let window = UIWindow()
-        window.backgroundColor = UIColor.clearColor()
+        window.backgroundColor = UIColor.clear
         let mainView = UIView()
         mainView.layer.cornerRadius = 10
-        mainView.backgroundColor = UIColor(red:0, green:0, blue:0, alpha: 0.7)
-        
+        mainView.backgroundColor = UIColor(red: 0, green: 0, blue: 0, alpha: 0.7)
+
         var image = UIImage()
         switch type {
         case .success:
@@ -215,137 +288,258 @@ class SwiftNotice: NSObject {
             image = SwiftNoticeSDK.imageOfInfo
         }
         let checkmarkView = UIImageView(image: image)
-        checkmarkView.frame = CGRectMake(27, 15, 36, 36)
+        checkmarkView.frame = CGRect(x: 27, y: 15, width: 36, height: 36)
         mainView.addSubview(checkmarkView)
-        
-        let label = UILabel(frame: CGRectMake(0, 60, 90, 16))
-        label.font = UIFont.systemFontOfSize(13)
-        label.textColor = UIColor.whiteColor()
+
+        let label = UILabel(frame: CGRect(x: 0, y: 60, width: 90, height: 16))
+        label.font = UIFont.systemFont(ofSize: 13)
+        label.textColor = UIColor.white
         label.text = text
-        label.textAlignment = NSTextAlignment.Center
+        label.textAlignment = NSTextAlignment.center
+        label.numberOfLines = 0
+        let size = label.sizeThatFits(CGSize(width: UIScreen.main.bounds.width-82,
+                                             height: CGFloat.greatestFiniteMagnitude))
+        label.frame = CGRect(x: 0, y: 0, width: size.width, height: size.height)
         mainView.addSubview(label)
-        
-        window.frame = frame
-        mainView.frame = frame
-        
-        window.windowLevel = UIWindowLevelAlert
-        window.center = getRealCenter()
-        // change orientation
-        window.transform = CGAffineTransformMakeRotation(CGFloat(degree * M_PI / 180))
-        window.hidden = false
+
+        var width = label.frame.width + 40
+        if width < 90 {
+            width = 90
+        }
+
+        let superFrame = CGRect(x: 0, y: 0, width: width, height: label.frame.height + 71)
+        window.frame = UIScreen.main.bounds
+        mainView.frame = superFrame
+        mainView.center = window.center
+
+        label.center = CGPoint(x: width / 2, y: size.height / 2 + 61)
+        checkmarkView.center = CGPoint(x: width / 2, y: 15 + checkmarkView.bounds.height / 2)
+
+        if let version = Double(UIDevice.current.systemVersion),
+            version < 9.0 {
+            // change center
+            window.center = getRealCenter()
+            // change direction
+            window.transform = CGAffineTransform(rotationAngle: CGFloat(degree * Double.pi / 180))
+        }
+
+        window.windowLevel = UIWindow.Level.alert
+        window.center = rootView!.center
+        window.isHidden = false
         window.addSubview(mainView)
         windows.append(window)
-        
+
+        mainView.alpha = 0.0
+        UIView.animate(withDuration: 0.2, animations: {
+            mainView.alpha = 1
+        })
+
         if autoClear {
-            let selector = #selector(SwiftNotice.hideNotice(_:))
-            self.performSelector(selector, withObject: window, afterDelay: NSTimeInterval(autoClearTime))
+            self.perform(.hideNotice, with: window, afterDelay: TimeInterval(autoClearTime))
         }
+        return window
     }
-    
-    // fix https://github.com/johnlui/SwiftNotice/issues/2
-    static func hideNotice(sender: AnyObject) {
-        if let window = sender as? UIWindow {
-            if let index = windows.indexOf({ (item) -> Bool in
-                return item == window
-            }) {
-                windows.removeAtIndex(index)
-            }
+
+    @discardableResult
+    static func showLoading(text: String) -> UIWindow {
+        let window = UIWindow()
+        window.backgroundColor = UIColor.clear
+        let mainView = UIView()
+        mainView.layer.cornerRadius = 10
+        mainView.backgroundColor = UIColor(red: 0, green: 0, blue: 0, alpha: 0.7)
+
+        let checkmarkView = UIActivityIndicatorView()
+        checkmarkView.style = .whiteLarge
+        checkmarkView.startAnimating()
+        checkmarkView.hidesWhenStopped = true
+        checkmarkView.frame = CGRect(x: 0, y: 10, width: 36, height: 36)
+        mainView.addSubview(checkmarkView)
+
+        let label = UILabel(frame: .zero)
+        label.font = UIFont.systemFont(ofSize: 13)
+        label.textColor = UIColor.white
+        label.text = text
+        label.textAlignment = NSTextAlignment.center
+        label.numberOfLines = 0
+        let size = label.sizeThatFits(CGSize(width: UIScreen.main.bounds.width-82,
+                                             height: CGFloat.greatestFiniteMagnitude))
+        label.frame = CGRect(x: 0, y: 0, width: size.width, height: size.height)
+        mainView.addSubview(label)
+
+        var width = label.frame.width + 40
+        if width < 90 {
+            width = 90
         }
+
+        let superFrame = CGRect(x: 0, y: 0, width: width, height: label.frame.height + 71)
+        window.frame = UIScreen.main.bounds
+        mainView.frame = superFrame
+        mainView.center = window.center
+
+        label.center = CGPoint(x: width / 2, y: size.height / 2 + 61)
+        checkmarkView.center = CGPoint(x: width / 2, y: 15 + checkmarkView.bounds.height / 2)
+
+        if let version = Double(UIDevice.current.systemVersion),
+            version < 9.0 {
+            // change center
+            window.center = getRealCenter()
+            // change direction
+            window.transform = CGAffineTransform(rotationAngle: CGFloat(degree * Double.pi / 180))
+        }
+
+        window.isHidden = false
+        window.addSubview(mainView)
+        windows.append(window)
+
+        mainView.alpha = 0.0
+        UIView.animate(withDuration: 0.2, animations: {
+            mainView.alpha = 1
+        })
+        return window
     }
-    
-    // fix orientation problem
+
+    // just for iOS 8
     static func getRealCenter() -> CGPoint {
-        if UIApplication.sharedApplication().statusBarOrientation.hashValue >= 3 {
-            return CGPoint(x: rv.center.y, y: rv.center.x)
+        if UIApplication.shared.statusBarOrientation.rawValue >= 3 {
+            return CGPoint(x: rootView!.center.y, y: rootView!.center.x)
         } else {
-            return rv.center
+            return rootView!.center
         }
     }
 }
 
-class SwiftNoticeSDK {
+private class SwiftNoticeSDK {
     struct Cache {
         static var imageOfCheckmark: UIImage?
         static var imageOfCross: UIImage?
         static var imageOfInfo: UIImage?
     }
-    class func draw(type: NoticeType) {
+    class func draw(_ type: NoticeType) {
         let checkmarkShapePath = UIBezierPath()
-        
+
         // draw circle
-        checkmarkShapePath.moveToPoint(CGPointMake(36, 18))
-        checkmarkShapePath.addArcWithCenter(CGPointMake(18, 18), radius: 17.5, startAngle: 0, endAngle: CGFloat(M_PI*2), clockwise: true)
-        checkmarkShapePath.closePath()
-        
+        checkmarkShapePath.move(to: CGPoint(x: 36, y: 18))
+        checkmarkShapePath.addArc(withCenter: CGPoint(x: 18, y: 18),
+                                  radius: 17.5,
+                                  startAngle: 0,
+                                  endAngle: CGFloat(Double.pi*2),
+                                  clockwise: true)
+        checkmarkShapePath.close()
+
         switch type {
         case .success: // draw checkmark
-            checkmarkShapePath.moveToPoint(CGPointMake(10, 18))
-            checkmarkShapePath.addLineToPoint(CGPointMake(16, 24))
-            checkmarkShapePath.addLineToPoint(CGPointMake(27, 13))
-            checkmarkShapePath.moveToPoint(CGPointMake(10, 18))
-            checkmarkShapePath.closePath()
+            checkmarkShapePath.move(to: CGPoint(x: 10, y: 18))
+            checkmarkShapePath.addLine(to: CGPoint(x: 16, y: 24))
+            checkmarkShapePath.addLine(to: CGPoint(x: 27, y: 13))
+            checkmarkShapePath.move(to: CGPoint(x: 10, y: 18))
+            checkmarkShapePath.close()
         case .error: // draw X
-            checkmarkShapePath.moveToPoint(CGPointMake(10, 10))
-            checkmarkShapePath.addLineToPoint(CGPointMake(26, 26))
-            checkmarkShapePath.moveToPoint(CGPointMake(10, 26))
-            checkmarkShapePath.addLineToPoint(CGPointMake(26, 10))
-            checkmarkShapePath.moveToPoint(CGPointMake(10, 10))
-            checkmarkShapePath.closePath()
+            checkmarkShapePath.move(to: CGPoint(x: 10, y: 10))
+            checkmarkShapePath.addLine(to: CGPoint(x: 26, y: 26))
+            checkmarkShapePath.move(to: CGPoint(x: 10, y: 26))
+            checkmarkShapePath.addLine(to: CGPoint(x: 26, y: 10))
+            checkmarkShapePath.move(to: CGPoint(x: 10, y: 10))
+            checkmarkShapePath.close()
         case .info:
-            checkmarkShapePath.moveToPoint(CGPointMake(18, 6))
-            checkmarkShapePath.addLineToPoint(CGPointMake(18, 22))
-            checkmarkShapePath.moveToPoint(CGPointMake(18, 6))
-            checkmarkShapePath.closePath()
-            
-            UIColor.whiteColor().setStroke()
+            checkmarkShapePath.move(to: CGPoint(x: 18, y: 6))
+            checkmarkShapePath.addLine(to: CGPoint(x: 18, y: 22))
+            checkmarkShapePath.move(to: CGPoint(x: 18, y: 6))
+            checkmarkShapePath.close()
+
+            UIColor.white.setStroke()
             checkmarkShapePath.stroke()
-            
+
             let checkmarkShapePath = UIBezierPath()
-            checkmarkShapePath.moveToPoint(CGPointMake(18, 27))
-            checkmarkShapePath.addArcWithCenter(CGPointMake(18, 27), radius: 1, startAngle: 0, endAngle: CGFloat(M_PI*2), clockwise: true)
-            checkmarkShapePath.closePath()
-            
-            UIColor.whiteColor().setFill()
+            checkmarkShapePath.move(to: CGPoint(x: 18, y: 27))
+            checkmarkShapePath.addArc(withCenter: CGPoint(x: 18, y: 27),
+                                      radius: 1,
+                                      startAngle: 0,
+                                      endAngle: CGFloat(Double.pi*2),
+                                      clockwise: true)
+            checkmarkShapePath.close()
+
+            UIColor.white.setFill()
             checkmarkShapePath.fill()
         }
-        
-        UIColor.whiteColor().setStroke()
+
+        UIColor.white.setStroke()
         checkmarkShapePath.stroke()
     }
     class var imageOfCheckmark: UIImage {
-        if (Cache.imageOfCheckmark != nil) {
+        if Cache.imageOfCheckmark != nil {
             return Cache.imageOfCheckmark!
         }
-        UIGraphicsBeginImageContextWithOptions(CGSizeMake(36, 36), false, 0)
-        
+        UIGraphicsBeginImageContextWithOptions(CGSize(width: 36, height: 36), false, 0)
+
         SwiftNoticeSDK.draw(NoticeType.success)
-        
+
         Cache.imageOfCheckmark = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
         return Cache.imageOfCheckmark!
     }
     class var imageOfCross: UIImage {
-        if (Cache.imageOfCross != nil) {
+        if Cache.imageOfCross != nil {
             return Cache.imageOfCross!
         }
-        UIGraphicsBeginImageContextWithOptions(CGSizeMake(36, 36), false, 0)
-        
+        UIGraphicsBeginImageContextWithOptions(CGSize(width: 36, height: 36), false, 0)
+
         SwiftNoticeSDK.draw(NoticeType.error)
-        
+
         Cache.imageOfCross = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
         return Cache.imageOfCross!
     }
     class var imageOfInfo: UIImage {
-        if (Cache.imageOfInfo != nil) {
+        if Cache.imageOfInfo != nil {
             return Cache.imageOfInfo!
         }
-        UIGraphicsBeginImageContextWithOptions(CGSizeMake(36, 36), false, 0)
-        
+        UIGraphicsBeginImageContextWithOptions(CGSize(width: 36, height: 36), false, 0)
+
         SwiftNoticeSDK.draw(NoticeType.info)
-        
+
         Cache.imageOfInfo = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
         return Cache.imageOfInfo!
     }
+}
+
+extension UIWindow {
+    func hide() {
+        SwiftNotice.hideNotice(self)
+    }
+}
+
+fileprivate extension Selector {
+    static let hideNotice = #selector(SwiftNotice.hideNotice(_:))
+}
+
+@objc extension SwiftNotice {
+
+    // fix https://github.com/johnlui/SwiftNotice/issues/2
+    static func hideNotice(_ sender: AnyObject) {
+        if let window = sender as? UIWindow {
+
+            if let topView = window.subviews.first {
+                UIView.animate(withDuration: 0.2, animations: {
+
+                    if topView.tag == snTopBar {
+                        topView.frame = CGRect(x: 0,
+                                               y: -topView.frame.height,
+                                               width: topView.frame.width,
+                                               height: topView.frame.height)
+                    }
+                    topView.alpha = 0
+                }, completion: { _ in
+
+                    if let index = windows.firstIndex(where: { (item) -> Bool in
+                        return item == window
+                    }) {
+                        windows.remove(at: index)
+                    }
+                })
+            }
+
+        }
+    }
+
 }
